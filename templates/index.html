@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support Desk</title>
+<style>
+  :root {
+    --ink:        #14181f;
+    --ink-soft:   #5a6472;
+    --paper:      #f5f6f8;
+    --card:       #ffffff;
+    --rule:       #dfe3e9;
+    --accent:     #2f4bd8;
+    --open:       #c2761a;
+    --progress:   #2f4bd8;
+    --resolved:   #1f7a4d;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 18px 24px;
+    background: var(--card);
+    border-bottom: 1px solid var(--rule);
+  }
+  header h1 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+  header .who {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(300px, 380px) 1fr;
+    gap: 20px;
+    padding: 20px 24px 40px;
+    align-items: start;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .panel-head h2 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  /* ---- queue ---- */
+  .queue { list-style: none; margin: 0; padding: 0; max-height: 62vh; overflow-y: auto; }
+  .queue li { border-bottom: 1px solid var(--rule); }
+  .queue button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px 12px 13px;
+    background: none;
+    border: 0;
+    border-left: 3px solid transparent;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+  .queue button:hover { background: #f8f9fb; }
+  .queue button[aria-current="true"] { background: #eef1fd; border-left-color: var(--accent); }
+  .queue .row1 {
+    display: flex;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 3px;
+  }
+  .queue .title { font-weight: 550; letter-spacing: -0.005em; }
+
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .s-open      { background: var(--open); }
+  .s-in_progress { background: var(--progress); }
+  .s-resolved  { background: var(--resolved); }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 9px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: #fbfcfd;
+  }
+
+  /* ---- thread ---- */
+  .thread-head { padding: 16px; border-bottom: 1px solid var(--rule); }
+  .thread-head .meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .thread-head h3 { margin: 0 0 12px; font-size: 18px; font-weight: 620; letter-spacing: -0.015em; }
+  .thread-head .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .messages { list-style: none; margin: 0; padding: 16px; display: grid; gap: 14px; max-height: 46vh; overflow-y: auto; }
+  .messages li { border-left: 2px solid var(--rule); padding-left: 12px; }
+  .messages .byline { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-bottom: 3px; }
+  .messages p { margin: 0; white-space: pre-wrap; }
+
+  .composer { border-top: 1px solid var(--rule); padding: 14px 16px; display: grid; gap: 10px; }
+
+  input, textarea, select, button.action {
+    font: inherit;
+    color: inherit;
+    padding: 8px 10px;
+    border: 1px solid var(--rule);
+    border-radius: 7px;
+    background: #fff;
+  }
+  textarea { resize: vertical; min-height: 68px; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  button.action {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 550;
+    cursor: pointer;
+    justify-self: start;
+    padding: 8px 16px;
+  }
+  button.action:hover { background: #2740bd; }
+  button.action.ghost { background: #fff; color: var(--ink); border-color: var(--rule); }
+  button.action.ghost:hover { background: #f4f6fa; }
+
+  .empty { padding: 28px 16px; color: var(--ink-soft); text-align: center; }
+  .new-form { padding: 14px 16px; display: grid; gap: 10px; }
+  .toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 8px;
+    font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .queue { max-height: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Support Desk</h1>
+  <span class="pill" id="counts">loading</span>
+  <span class="who">{{ user }}</span>
+</header>
+
+<div class="layout">
+  <div>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Queue</h2>
+        <select id="filter" style="margin-left:auto;padding:4px 8px;font-size:13px">
+          <option value="">All statuses</option>
+          {% for s in statuses %}<option value="{{ s }}">{{ s.replace('_',' ') }}</option>{% endfor %}
+        </select>
+      </div>
+      <ul class="queue" id="queue"></ul>
+    </section>
+
+    <section class="panel" style="margin-top:20px">
+      <div class="panel-head"><h2>New ticket</h2></div>
+      <div class="new-form">
+        <input id="new-title" placeholder="What is happening?" maxlength="300">
+        <textarea id="new-body" placeholder="First message (optional)"></textarea>
+        <button class="action" id="create">Create ticket</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel" id="thread">
+    <div class="empty">Select a ticket to read the thread.</div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STATUSES = {{ statuses | tojson }};
+let tickets = [];
+let selectedId = null;
+
+const el = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const when = (iso) => new Date(iso).toLocaleString(undefined, {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+const label = (s) => s.replace('_', ' ');
+
+function toast(msg) {
+  const t = el('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    headers: {'Content-Type': 'application/json'},
+    ...options
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `Request failed (${res.status})`);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+async function loadTickets() {
+  const status = el('filter').value;
+  tickets = await api('/api/tickets' + (status ? `?status=${status}` : ''));
+  renderQueue();
+  renderCounts();
+}
+
+function renderCounts() {
+  const by = {};
+  tickets.forEach(t => by[t.status] = (by[t.status] || 0) + 1);
+  el('counts').innerHTML = STATUSES
+    .map(s => `<span class="dot s-${s}"></span>${by[s] || 0} ${label(s)}`)
+    .join('&nbsp;&nbsp;');
+}
+
+function renderQueue() {
+  const q = el('queue');
+  if (!tickets.length) {
+    q.innerHTML = '<li><div class="empty">No tickets here yet.</div></li>';
+    return;
+  }
+  q.innerHTML = tickets.map(t => `
+    <li>
+      <button data-id="${t.ticket_id}" aria-current="${t.ticket_id === selectedId}">
+        <span class="row1">
+          <span class="dot s-${t.status}"></span>
+          <span>#${String(t.ticket_id).padStart(4, '0')}</span>
+          <span>${label(t.status)}</span>
+          <span style="margin-left:auto">${t.message_count} msg</span>
+        </span>
+        <span class="title">${esc(t.title)}</span>
+      </button>
+    </li>`).join('');
+  q.querySelectorAll('button').forEach(b =>
+    b.addEventListener('click', () => selectTicket(Number(b.dataset.id))));
+}
+
+async function selectTicket(id) {
+  selectedId = id;
+  renderQueue();
+  const [ticket, messages] = await Promise.all([
+    api(`/api/tickets/${id}`),
+    api(`/api/tickets/${id}/messages`)
+  ]);
+  renderThread(ticket, messages);
+}
+
+function renderThread(t, messages) {
+  el('thread').innerHTML = `
+    <div class="thread-head">
+      <div class="meta">#${String(t.ticket_id).padStart(4,'0')} &middot; opened by ${esc(t.created_by)} &middot; ${when(t.created_at)}</div>
+      <h3>${esc(t.title)}</h3>
+      <div class="controls">
+        <span class="pill"><span class="dot s-${t.status}"></span>${label(t.status)}</span>
+        <select id="status-select">
+          ${STATUSES.map(s => `<option value="${s}" ${s === t.status ? 'selected' : ''}>${label(s)}</option>`).join('')}
+        </select>
+        <button class="action ghost" id="save-status">Update status</button>
+      </div>
+    </div>
+    <ul class="messages">
+      ${messages.length ? messages.map(m => `
+        <li>
+          <div class="byline">${esc(m.author)} &middot; ${when(m.created_at)}</div>
+          <p>${esc(m.message_text)}</p>
+        </li>`).join('') : '<li class="empty">No messages yet. Add the first one below.</li>'}
+    </ul>
+    <div class="composer">
+      <textarea id="reply" placeholder="Write a reply"></textarea>
+      <button class="action" id="send">Add message</button>
+    </div>`;
+
+  el('save-status').addEventListener('click', async () => {
+    try {
+      await api(`/api/tickets/${t.ticket_id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({status: el('status-select').value})
+      });
+      toast('Status updated');
+      await loadTickets();
+      await selectTicket(t.ticket_id);
+    } catch (e) { toast(e.message); }
+  });
+
+  el('send').addEventListener('click', async () => {
+    const body = el('reply').value.trim();
+    if (!body) { toast('Write something first'); return; }
+    try {
+      await api(`/api/tickets/${t.ticket_id}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({message_text: body})
+      });
+      toast('Message added');
+      await loadTickets();
+      await selectTicket(t.ticket_id);
+    } catch (e) { toast(e.message); }
+  });
+}
+
+el('create').addEventListener('click', async () => {
+  const title = el('new-title').value.trim();
+  if (title.length < 3) { toast('Give the ticket a title'); return; }
+  try {
+    const created = await api('/api/tickets', {
+      method: 'POST',
+      body: JSON.stringify({title, first_message: el('new-body').value.trim() || null})
+    });
+    el('new-title').value = '';
+    el('new-body').value = '';
+    toast(`Ticket #${created.ticket_id} created`);
+    el('filter').value = '';
+    await loadTickets();
+    await selectTicket(created.ticket_id);
+  } catch (e) { toast(e.message); }
+});
+
+el('filter').addEventListener('change', loadTickets);
+
+loadTickets().catch(e => toast(e.message));
+</script>
+</body>
+</html>
