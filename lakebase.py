@@ -54,7 +54,7 @@ def get_engine() -> Engine:
     if _engine is not None:
         return _engine
 
-    raw_url = os.environ.get("LAKEBASE_URL")
+    raw_url = os.environ.get("lakebase_url") #LAKEBASE_URL
     if not raw_url:
         raise RuntimeError(
             "LAKEBASE_URL is not set. In Databricks, add the connection string as a "
