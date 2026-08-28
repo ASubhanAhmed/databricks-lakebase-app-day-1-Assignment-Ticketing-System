@@ -1,0 +1,16 @@
+# Databricks App configuration.
+#
+# LAKEBASE_URL is NOT stored here. Add the Lakebase connection string as a
+# secret under: your app -> Resources -> Add resource -> Secret, and give that
+# resource the key name "lakebase-url". `valueFrom` below reads it at runtime.
+
+command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+env:
+  - name: LAKEBASE_URL
+    valueFrom: lakebase-url
+
+  # Set to "false" once you no longer want sample rows inserted into an
+  # empty database. Existing data is never overwritten either way.
+  - name: SEED_SAMPLE_DATA
+    value: "true"
